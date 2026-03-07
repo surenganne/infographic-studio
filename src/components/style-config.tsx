@@ -23,6 +23,13 @@ const FONT_STYLES = [
   { value: 'classic', label: 'Classic' },
 ] as const;
 
+const DIAGRAM_STYLES = [
+  { value: 'infographic', label: '🎨 Infographic', desc: 'Illustrated poster' },
+  { value: 'technical', label: '🔧 Technical', desc: 'Architecture diagram' },
+  { value: 'flowchart', label: '🔀 Flowchart', desc: 'Process / steps' },
+  { value: 'comparison', label: '⚖️ Comparison', desc: 'Side-by-side' },
+] as const;
+
 const label = (text: string) => (
   <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{text}</p>
 );
@@ -41,6 +48,35 @@ export function StyleConfigPanel({ config, onChange }: StyleConfigProps) {
         >
           Reset
         </button>
+      </div>
+
+      {/* Diagram style — shown first, most impactful choice */}
+      <div style={{ marginBottom: 16 }}>
+        {label('Diagram Type')}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          {DIAGRAM_STYLES.map(d => (
+            <button
+              key={d.value}
+              type="button"
+              onClick={() => update({ diagramStyle: d.value })}
+              style={{
+                padding: '8px 8px',
+                borderRadius: 8,
+                border: `1px solid ${config.diagramStyle === d.value ? '#f97316' : 'var(--border)'}`,
+                background: config.diagramStyle === d.value ? '#fff7ed' : 'var(--background)',
+                color: config.diagramStyle === d.value ? '#c2410c' : 'var(--foreground)',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.1s',
+                textAlign: 'left',
+              }}
+            >
+              <div>{d.label}</div>
+              <div style={{ fontSize: 10, color: config.diagramStyle === d.value ? '#ea580c' : 'var(--muted)', fontWeight: 400, marginTop: 2 }}>{d.desc}</div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Colors */}

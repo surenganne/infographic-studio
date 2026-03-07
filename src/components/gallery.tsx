@@ -24,7 +24,7 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
   const handleDownload = async (image: GeneratedImage) => {
     setDownloadingId(image.id);
     try {
-      const res = await fetch(image.url);
+      const res = await fetch(`/api/download?url=${encodeURIComponent(image.url)}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

@@ -6,6 +6,7 @@ export interface StyleConfig {
   aspectRatio: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
   resolution: '1K' | '2K' | '4K';
   fontStyle: 'switzer' | 'handwritten' | 'modern' | 'classic';
+  diagramStyle: 'infographic' | 'technical' | 'flowchart' | 'comparison';
 }
 
 export interface InfographicContent {
@@ -62,4 +63,5 @@ export const DEFAULT_STYLE_CONFIG: StyleConfig = {
   aspectRatio: '16:9',
   resolution: '2K',
   fontStyle: 'switzer',
+  diagramStyle: 'infographic',
 };

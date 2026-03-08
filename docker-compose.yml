@@ -3,12 +3,14 @@ services:
   localstack:
     image: localstack/localstack:3
     container_name: localstack
+    restart: unless-stopped
     ports:
       - "4566:4566"
     environment:
       - SERVICES=s3
       - DEFAULT_REGION=us-east-1
       - EAGER_SERVICE_LOADING=1
+      - PERSISTENCE=1
     volumes:
       - localstack_data:/var/lib/localstack
       - ./scripts/init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh
@@ -21,6 +23,7 @@ services:
   app:
     build: .
     container_name: infographic-studio
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -37,3 +40,4 @@ services:
 
 volumes:
   localstack_data:
+    name: infographic-studio-localstack-data

@@ -1,5 +1,7 @@
 import { InfographicContent, StyleConfig } from '@/types';
 
+const AUTHOR_CREDIT = 'Surendra Ganne';
+
 export function buildInfographicPrompt(content: InfographicContent, style: StyleConfig): string {
   switch (style.diagramStyle) {
     case 'technical':  return buildTechnicalDiagram(content, style);
@@ -9,170 +11,114 @@ export function buildInfographicPrompt(content: InfographicContent, style: Style
   }
 }
 
-// ─── Infographic ────────────────────────────────────────────────────────────
+// ─── Infographic ─────────────────────────────────────────────────────────────
 
 function buildInfographic(content: InfographicContent, style: StyleConfig): string {
-  const sectionList = content.sections
-    .map((s, i) => `  Section ${i + 1} — "${s.heading}":\n${s.points.map(p => `    • ${p}`).join('\n')}`)
+  const sections = content.sections
+    .map(s => `${s.heading}:\n${s.points.map(p => `  - ${p}`).join('\n')}`)
     .join('\n\n');
 
-  return `Create a professional illustrated infographic poster. Every piece of text below MUST appear verbatim in the final image.
+  return `Design a beautiful, professional infographic poster with the following content:
 
-TITLE (large, top-center): "${content.title}"
+Title: ${content.title}
 
-SECTIONS — render each as a distinct visual card with an icon, heading, and bullet list:
-${sectionList}
-${content.additionalNotes ? `\nFOOTER NOTE: "${content.additionalNotes}"` : ''}
+${sections}
+${content.additionalNotes ? `\nNote: ${content.additionalNotes}` : ''}
 
-LAYOUT RULES:
-- ${content.sections.length} cards arranged in a ${getGridLayout(content.sections.length)} grid
-- Each card: rounded rectangle, thin border, section heading in a colored header bar, bullets below
-- Primary accent color ${style.primaryColor} and secondary ${style.secondaryColor} used alternately on card headers
-- Background ${style.backgroundColor}, body text color ${style.lineWorkColor}
-- Small relevant icon top-left of each card header
-- Generous padding inside cards, clear whitespace between cards
+Visual style:
+- Clean editorial layout with ${content.sections.length} distinct sections, each in a card with a colored header
+- Primary color ${style.primaryColor}, secondary color ${style.secondaryColor}, background ${style.backgroundColor}
+- ${getFontDescription(style.fontStyle)} typography
+- Small icons next to each section heading
 - Aspect ratio ${style.aspectRatio}
-
-TYPOGRAPHY: ${getFontDescription(style.fontStyle)} — bold title, medium section headings, regular body text
-STYLE: Clean editorial infographic — think high-quality tech blog or consulting slide deck
-DO NOT omit any bullet point. DO NOT paraphrase — use the exact words provided.`;
+- High quality, print-ready design
+- Add a small subtle credit line at the bottom: "Created by ${AUTHOR_CREDIT}"`;
 }
 
-// ─── Technical Diagram ──────────────────────────────────────────────────────
+// ─── Technical Diagram ───────────────────────────────────────────────────────
 
 function buildTechnicalDiagram(content: InfographicContent, style: StyleConfig): string {
-  const components = content.sections.map((s, i) => {
-    const connections = s.points.map(p => `      → ${p}`).join('\n');
-    return `  Component ${i + 1}: "${s.heading}"\n    Connections / details:\n${connections}`;
-  }).join('\n\n');
+  const components = content.sections
+    .map(s => `${s.heading}: ${s.points.join(', ')}`)
+    .join('\n');
 
-  const arrowDescriptions = content.sections.flatMap((s, i) =>
-    s.points.map(p => `  • Box "${s.heading}" → labeled arrow → "${p}"`)
-  ).join('\n');
+  return `Create a clean technical architecture diagram:
 
-  return `Create a precise technical architecture diagram. Render EVERY component and connection listed below exactly as specified.
+Title: ${content.title}
 
-DIAGRAM TITLE (bold, top-center, large font): "${content.title}"
-
-COMPONENTS AND THEIR CONNECTIONS:
+Components and connections:
 ${components}
-${content.additionalNotes ? `\nADDITIONAL CONTEXT: ${content.additionalNotes}` : ''}
+${content.additionalNotes ? `\nContext: ${content.additionalNotes}` : ''}
 
-REQUIRED ARROWS (draw each one with a label):
-${arrowDescriptions}
-
-VISUAL SPECIFICATION:
-- White or very light gray (#f8f8f8) background
-- Each component = rounded rectangle box, 2px border
-  • Use ${style.primaryColor} border for primary/source components (left side)
-  • Use ${style.secondaryColor} border for secondary/target components (right side)
-  • Use dashed border for grouping/container boxes
-- Component label centered inside box, bold sans-serif, dark text
-- Arrows: solid lines with filled arrowheads, short descriptive label along the arrow
-- Group related components inside a larger dashed-border container with a label
-- Layout: left-to-right data flow OR top-to-bottom hierarchy — choose whichever fits the content
-- Aspect ratio: ${style.aspectRatio}
-- Consistent spacing: equal gaps between all boxes, aligned on a grid
-- NO decorative elements — purely functional diagram
-- Small monochrome icon inside each box representing its role (server, database, user, API, etc.)
-
-TYPOGRAPHY: Clean sans-serif throughout. Box labels 14–16px bold. Arrow labels 11–12px regular. Title 24px bold.
-CRITICAL: Every single component name and arrow label from the list above must appear in the diagram. Do not omit or merge any.`;
+Style:
+- Boxes connected by labeled arrows showing data/request flow
+- Left-to-right or top-to-bottom layout
+- Primary color ${style.primaryColor} for main components, ${style.secondaryColor} for secondary
+- White background, clean sans-serif labels
+- Aspect ratio ${style.aspectRatio}
+- Add a small subtle credit line at the bottom: "Created by ${AUTHOR_CREDIT}"`;
 }
 
-// ─── Flowchart ───────────────────────────────────────────────────────────────
+// ─── Flowchart ────────────────────────────────────────────────────────────────
 
 function buildFlowchart(content: InfographicContent, style: StyleConfig): string {
-  const steps = content.sections.map((s, i) => {
-    const isDecision = s.heading.includes('?') || s.points.some(p => p.toLowerCase().startsWith('if ') || p.toLowerCase().startsWith('yes') || p.toLowerCase().startsWith('no'));
-    const shape = isDecision ? 'DIAMOND (decision)' : 'RECTANGLE (process step)';
-    return `  Step ${i + 1}: ${shape}\n    Label: "${s.heading}"\n    Sub-text / branches:\n${s.points.map(p => `      • ${p}`).join('\n')}`;
-  }).join('\n\n');
+  const steps = content.sections
+    .map((s, i) => `Step ${i + 1} — ${s.heading}: ${s.points.join('; ')}`)
+    .join('\n');
 
-  return `Create an accurate process flowchart diagram. Render every step exactly as listed.
+  return `Create a clear process flowchart:
 
-FLOWCHART TITLE (top-center, bold): "${content.title}"
+Title: ${content.title}
 
-STEPS IN ORDER (top to bottom):
+Steps in order:
 ${steps}
-${content.additionalNotes ? `\nNOTES: ${content.additionalNotes}` : ''}
+${content.additionalNotes ? `\nNotes: ${content.additionalNotes}` : ''}
 
-SHAPE RULES:
-- Rounded rectangle (pill shape) = START and END nodes
-- Rectangle = process / action step
-- Diamond = decision / branch point (Yes/No or condition)
-- Parallelogram = input or output
-
-VISUAL SPECIFICATION:
-- White background
-- Main flow path: boxes filled with light ${style.primaryColor}15 tint, ${style.primaryColor} border
-- Alternate/branch path: ${style.secondaryColor} border
-- Arrows: solid lines, filled arrowheads, labeled where branching occurs
-- Step number badge (circle) top-left of each box
-- Consistent vertical spacing between steps — align all boxes on center axis
-- Aspect ratio: ${style.aspectRatio}
-- Each step label is bold, sub-text is smaller regular weight below it
-
-TYPOGRAPHY: ${getFontDescription(style.fontStyle)}
-CRITICAL: Steps must appear in the EXACT ORDER listed. Do not reorder, merge, or omit any step.`;
+Style:
+- Rectangles for process steps, diamonds for decisions, rounded pills for start/end
+- Arrows connecting steps top-to-bottom
+- Step numbers in circles, primary color ${style.primaryColor}
+- Clean white background, ${getFontDescription(style.fontStyle)} font
+- Aspect ratio ${style.aspectRatio}
+- Add a small subtle credit line at the bottom: "Created by ${AUTHOR_CREDIT}"`;
 }
 
-// ─── Comparison ──────────────────────────────────────────────────────────────
+// ─── Comparison ───────────────────────────────────────────────────────────────
 
 function buildComparison(content: InfographicContent, style: StyleConfig): string {
-  const colCount = content.sections.length;
-  const columns = content.sections.map((s, i) => {
-    const color = i % 2 === 0 ? style.primaryColor : style.secondaryColor;
-    return `  Column ${i + 1} — header color ${color}:\n    Title: "${s.heading}"\n    Points:\n${s.points.map((p, j) => `      Row ${j + 1}: "${p}"`).join('\n')}`;
-  }).join('\n\n');
+  const columns = content.sections
+    .map((s, i) => `Column ${i + 1} "${s.heading}": ${s.points.join(' | ')}`)
+    .join('\n');
 
-  // Build row labels from the first section's points as reference
-  const rowLabels = content.sections[0]?.points.map((_, i) => `Row ${i + 1}`) ?? [];
+  return `Create a side-by-side comparison chart:
 
-  return `Create a clean side-by-side comparison chart. Render every column and row exactly as listed.
+Title: ${content.title}
 
-CHART TITLE (top-center, large bold): "${content.title}"
-
-COLUMNS (${colCount} total, equal width, side by side):
 ${columns}
-${content.additionalNotes ? `\nFOOTER: "${content.additionalNotes}"` : ''}
+${content.additionalNotes ? `\nFooter: ${content.additionalNotes}` : ''}
 
-LAYOUT SPECIFICATION:
-- ${colCount} equal-width columns side by side
-- Row 0 (header row): each column's title in a colored rounded header badge
-  ${content.sections.map((s, i) => `Column ${i + 1} header: "${s.heading}" with background ${i % 2 === 0 ? style.primaryColor : style.secondaryColor}`).join(', ')}
-- Rows 1–N: alternating white / light gray (#f5f5f5) row backgrounds for readability
-- Each cell: centered text, consistent padding
-- Thin vertical dividers between columns
-- Left-most column can optionally show a row label / criterion name
-- Checkmark ✓ or ✗ icons where values are yes/no
-- Aspect ratio: ${style.aspectRatio}
-- Background: ${style.backgroundColor}
-
-TYPOGRAPHY: ${getFontDescription(style.fontStyle)} — bold column headers, regular cell text
-CRITICAL: Every row value must appear in its correct column. Do not swap, omit, or merge any cell.`;
+Style:
+- ${content.sections.length} equal columns with colored headers
+- Column 1 header: ${style.primaryColor}, Column 2 header: ${style.secondaryColor}
+- Alternating row backgrounds for readability
+- Checkmarks or icons where appropriate
+- Background ${style.backgroundColor}, ${getFontDescription(style.fontStyle)} font
+- Aspect ratio ${style.aspectRatio}
+- Add a small subtle credit line at the bottom: "Created by ${AUTHOR_CREDIT}"`;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getGridLayout(count: number): string {
-  if (count <= 2) return '1×2';
-  if (count <= 3) return '1×3';
-  if (count <= 4) return '2×2';
-  if (count <= 6) return '2×3';
-  return '3×3';
-}
-
 function getFontDescription(fontStyle: StyleConfig['fontStyle']): string {
   switch (fontStyle) {
-    case 'handwritten': return 'casual handwritten marker style (like a whiteboard)';
-    case 'modern':      return 'clean modern sans-serif (Inter / Helvetica style)';
-    case 'classic':     return 'classic serif (Georgia / Times style)';
-    default:            return 'clean geometric sans-serif (Switzer / Futura style)';
+    case 'handwritten': return 'casual handwritten marker style';
+    case 'modern':      return 'clean modern sans-serif';
+    case 'classic':     return 'classic serif';
+    default:            return 'clean geometric sans-serif';
   }
 }
 
-// ─── Content parser ──────────────────────────────────────────────────────────
+// ─── Content parser ───────────────────────────────────────────────────────────
 
 export function parseUserContent(rawText: string): InfographicContent {
   const lines = rawText.trim().split('\n').filter(l => l.trim());

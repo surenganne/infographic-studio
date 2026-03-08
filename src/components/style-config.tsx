@@ -10,93 +10,97 @@ interface StyleConfigProps {
 const ASPECT_RATIOS = [
   { value: '16:9', label: '16:9' },
   { value: '9:16', label: '9:16' },
-  { value: '1:1', label: '1:1' },
-  { value: '4:3', label: '4:3' },
+  { value: '1:1',  label: '1:1'  },
+  { value: '4:3',  label: '4:3'  },
 ] as const;
 
 const RESOLUTIONS = ['1K', '2K', '4K'] as const;
 
 const FONT_STYLES = [
-  { value: 'switzer', label: 'Switzer' },
+  { value: 'switzer',     label: 'Switzer'     },
   { value: 'handwritten', label: 'Handwritten' },
-  { value: 'modern', label: 'Modern' },
-  { value: 'classic', label: 'Classic' },
+  { value: 'modern',      label: 'Modern'      },
+  { value: 'classic',     label: 'Classic'     },
 ] as const;
 
 const DIAGRAM_STYLES = [
-  { value: 'infographic', label: '🎨 Infographic', desc: 'Illustrated poster' },
-  { value: 'technical', label: '🔧 Technical', desc: 'Architecture diagram' },
-  { value: 'flowchart', label: '🔀 Flowchart', desc: 'Process / steps' },
-  { value: 'comparison', label: '⚖️ Comparison', desc: 'Side-by-side' },
+  { value: 'infographic', label: '🎨 Infographic', desc: 'Illustrated poster'   },
+  { value: 'technical',   label: '🔧 Technical',   desc: 'Architecture diagram' },
+  { value: 'flowchart',   label: '🔀 Flowchart',   desc: 'Process / steps'      },
+  { value: 'comparison',  label: '⚖️ Comparison',  desc: 'Side-by-side table'   },
 ] as const;
 
-const label = (text: string) => (
-  <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{text}</p>
-);
+function SectionLabel({ text }: { text: string }) {
+  return <p className="section-label">{text}</p>;
+}
+
+// Active style using the indigo primary
+const activeStyle = {
+  border: '1.5px solid var(--primary)',
+  background: 'var(--primary-soft)',
+  color: 'var(--primary-text)',
+};
+
+const inactiveStyle = {
+  border: '1.5px solid var(--border)',
+  background: 'var(--bg)',
+  color: 'var(--text-muted)',
+};
 
 export function StyleConfigPanel({ config, onChange }: StyleConfigProps) {
   const update = (u: Partial<StyleConfig>) => onChange({ ...config, ...u });
 
   return (
-    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Style</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Style</span>
         <button
           type="button"
           onClick={() => onChange(DEFAULT_STYLE_CONFIG)}
-          style={{ fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+          style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
         >
           Reset
         </button>
       </div>
 
-      {/* Diagram style — shown first, most impactful choice */}
-      <div style={{ marginBottom: 16 }}>
-        {label('Diagram Type')}
+      {/* Diagram type */}
+      <div style={{ marginBottom: 18 }}>
+        <SectionLabel text="Diagram Type" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-          {DIAGRAM_STYLES.map(d => (
-            <button
-              key={d.value}
-              type="button"
-              onClick={() => update({ diagramStyle: d.value })}
-              style={{
-                padding: '8px 8px',
-                borderRadius: 8,
-                border: `1px solid ${config.diagramStyle === d.value ? '#f97316' : 'var(--border)'}`,
-                background: config.diagramStyle === d.value ? '#fff7ed' : 'var(--background)',
-                color: config.diagramStyle === d.value ? '#c2410c' : 'var(--foreground)',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.1s',
-                textAlign: 'left',
-              }}
-            >
-              <div>{d.label}</div>
-              <div style={{ fontSize: 10, color: config.diagramStyle === d.value ? '#ea580c' : 'var(--muted)', fontWeight: 400, marginTop: 2 }}>{d.desc}</div>
-            </button>
-          ))}
+          {DIAGRAM_STYLES.map(d => {
+            const active = config.diagramStyle === d.value;
+            return (
+              <button
+                key={d.value}
+                type="button"
+                onClick={() => update({ diagramStyle: d.value })}
+                style={{
+                  padding: '9px 10px', borderRadius: 8,
+                  ...(active ? activeStyle : inactiveStyle),
+                  fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.12s', textAlign: 'left',
+                }}
+              >
+                <div>{d.label}</div>
+                <div style={{ fontSize: 10, color: active ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 400, marginTop: 2 }}>
+                  {d.desc}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Colors */}
-      <div style={{ marginBottom: 16 }}>
-        {label('Colors')}
-        <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ marginBottom: 18 }}>
+        <SectionLabel text="Colors" />
+        <div className="color-row">
           {([['Primary', 'primaryColor'], ['Secondary', 'secondaryColor']] as const).map(([lbl, key]) => (
-            <div key={key} style={{
-              flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-              padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--background)',
-            }}>
-              <input
-                type="color"
-                value={config[key]}
-                onChange={e => update({ [key]: e.target.value })}
-                style={{ width: 24, height: 24, borderRadius: 6, border: 'none', padding: 0, cursor: 'pointer', background: 'none' }}
-              />
+            <div key={key} className="color-swatch">
+              <input type="color" value={config[key]} onChange={e => update({ [key]: e.target.value })} title={`${lbl} color`} />
               <div>
-                <p style={{ fontSize: 10, color: 'var(--muted)', lineHeight: 1 }}>{lbl}</p>
-                <p style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--foreground)', marginTop: 2 }}>{config[key]}</p>
+                <div className="color-swatch__label">{lbl}</div>
+                <div className="color-swatch__hex">{config[key]}</div>
               </div>
             </div>
           ))}
@@ -104,84 +108,68 @@ export function StyleConfigPanel({ config, onChange }: StyleConfigProps) {
       </div>
 
       {/* Aspect ratio */}
-      <div style={{ marginBottom: 16 }}>
-        {label('Aspect Ratio')}
+      <div style={{ marginBottom: 18 }}>
+        <SectionLabel text="Aspect Ratio" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          {ASPECT_RATIOS.map(r => (
-            <button
-              key={r.value}
-              type="button"
-              onClick={() => update({ aspectRatio: r.value })}
-              style={{
-                padding: '7px 4px',
-                borderRadius: 8,
-                border: `1px solid ${config.aspectRatio === r.value ? '#f97316' : 'var(--border)'}`,
-                background: config.aspectRatio === r.value ? '#fff7ed' : 'var(--background)',
-                color: config.aspectRatio === r.value ? '#c2410c' : 'var(--muted)',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.1s',
-              }}
-            >
-              {r.label}
-            </button>
-          ))}
+          {ASPECT_RATIOS.map(r => {
+            const active = config.aspectRatio === r.value;
+            return (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => update({ aspectRatio: r.value })}
+                style={{ padding: '8px 4px', borderRadius: 8, ...(active ? activeStyle : inactiveStyle), fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.12s' }}
+              >
+                {r.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Resolution */}
-      <div style={{ marginBottom: 16 }}>
-        {label('Resolution')}
+      <div style={{ marginBottom: 18 }}>
+        <SectionLabel text="Resolution" />
         <div style={{ display: 'flex', gap: 6 }}>
-          {RESOLUTIONS.map(res => (
-            <button
-              key={res}
-              type="button"
-              onClick={() => update({ resolution: res })}
-              style={{
-                flex: 1,
-                padding: '7px 4px',
-                borderRadius: 8,
-                border: `1px solid ${config.resolution === res ? '#3b82f6' : 'var(--border)'}`,
-                background: config.resolution === res ? '#eff6ff' : 'var(--background)',
-                color: config.resolution === res ? '#1d4ed8' : 'var(--muted)',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.1s',
-              }}
-            >
-              {res}
-            </button>
-          ))}
+          {RESOLUTIONS.map(res => {
+            const active = config.resolution === res;
+            return (
+              <button
+                key={res}
+                type="button"
+                onClick={() => update({ resolution: res })}
+                style={{
+                  flex: 1, padding: '8px 4px', borderRadius: 8,
+                  border: `1.5px solid ${active ? 'var(--purple)' : 'var(--border)'}`,
+                  background: active ? 'var(--purple-soft)' : 'var(--bg)',
+                  color: active ? 'var(--purple-text)' : 'var(--text-muted)',
+                  fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.12s',
+                }}
+              >
+                {res}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Font */}
       <div>
-        {label('Font Style')}
+        <SectionLabel text="Font Style" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-          {FONT_STYLES.map(f => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => update({ fontStyle: f.value })}
-              style={{
-                padding: '7px 4px',
-                borderRadius: 8,
-                border: `1px solid ${config.fontStyle === f.value ? '#f97316' : 'var(--border)'}`,
-                background: config.fontStyle === f.value ? '#fff7ed' : 'var(--background)',
-                color: config.fontStyle === f.value ? '#c2410c' : 'var(--muted)',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.1s',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FONT_STYLES.map(f => {
+            const active = config.fontStyle === f.value;
+            return (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => update({ fontStyle: f.value })}
+                style={{ padding: '8px 4px', borderRadius: 8, ...(active ? activeStyle : inactiveStyle), fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.12s' }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -3,6 +3,9 @@ import { storeImage } from '@/lib/storage';
 import { KeiApiRequest, KeiApiResponse } from '@/types';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Extend route timeout to 5 minutes (Vercel/Next.js route segment config)
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const body: KeiApiRequest = await request.json();

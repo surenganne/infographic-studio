@@ -3,7 +3,7 @@
 import { buildInfographicPrompt, parseUserContent } from '@/lib/prompt-builder';
 import { DEFAULT_STYLE_CONFIG, GeneratedImage, InfographicContent, StyleConfig } from '@/types';
 import { AlertCircle, Loader2, Sparkles, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ContentInput } from './content-input';
 import { Gallery } from './gallery';
 import { StyleConfigPanel } from './style-config';
@@ -15,7 +15,42 @@ export function InfographicGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = async (prompt: string, resolution: string, aspect_ratio: string, parsedContent: InfographicContent, style: StyleConfig) => {
+  // Load persisted images from localStorage and verify they still exist in S3
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('infographic-gallery');
+      if (!saved) return;
+      const parsed: GeneratedImage[] = JSON.parse(saved);
+      if (!parsed.length) return;
+
+      // Verify each image URL is still accessible (S3 may have been wiped on container restart)
+      Promise.all(
+        parsed.map(img =>
+          fetch(img.url, { method: 'HEAD' })
+            .then(r => r.ok ? img : null)
+            .catch(() => null)
+        )
+      ).then(results => {
+        const valid = results.filter(Boolean) as GeneratedImage[];
+        setImages(valid);
+        localStorage.setItem('infographic-gallery', JSON.stringify(valid));
+      });
+    } catch { /* ignore */ }
+  }, []);
+
+  // Persist images to localStorage on every change
+  useEffect(() => {
+    if (images.length > 0)
+      try { localStorage.setItem('infographic-gallery', JSON.stringify(images)); } catch { /* quota */ }
+  }, [images]);
+
+  const generate = async (
+    prompt: string,
+    resolution: string,
+    aspect_ratio: string,
+    parsedContent: InfographicContent,
+    style: StyleConfig
+  ) => {
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -23,7 +58,14 @@ export function InfographicGenerator() {
     });
     const data = await response.json();
     if (!data.success) throw new Error(data.error || 'Generation failed');
-    return { id: Date.now().toString(), url: data.imageUrl, prompt, createdAt: new Date(), content: parsedContent, style };
+    return {
+      id: Date.now().toString(),
+      url: data.imageUrl,
+      prompt,
+      createdAt: new Date(),
+      content: parsedContent,
+      style,
+    };
   };
 
   const handleGenerate = async () => {
@@ -58,89 +100,65 @@ export function InfographicGenerator() {
   const handleDelete = (id: string) => setImages(prev => prev.filter(img => img.id !== id));
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--background)' }}>
-
-      {/* ── Left sidebar ── */}
-      <aside style={{
-        width: 340,
-        minWidth: 340,
-        display: 'flex',
-        flexDirection: 'column',
-        borderRight: '1px solid var(--border)',
-        background: 'var(--card)',
-      }}>
-        {/* Logo */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: 'linear-gradient(135deg, #f97316, #3b82f6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>
-            <Sparkles size={14} color="white" />
+    <div className="app-shell">
+      {/* ── Sidebar ── */}
+      <aside className="sidebar">
+        {/* Brand */}
+        <div className="sidebar-brand">
+          <div className="brand-icon">
+            <Sparkles size={15} color="white" />
           </div>
-          <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>Infographic Studio</span>
+          <div>
+            <div className="brand-name">Infographic Studio</div>
+            <div className="brand-sub">AI-powered visual design</div>
+          </div>
         </div>
 
-        {/* Scrollable form area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-          <div style={{ marginBottom: 20 }}>
-            <ContentInput value={content} onChange={setContent} />
-          </div>
+        {/* Scrollable form */}
+        <div className="sidebar-body">
+          <ContentInput value={content} onChange={setContent} />
+          <div className="divider" />
           <StyleConfigPanel config={styleConfig} onChange={setStyleConfig} />
         </div>
 
-        {/* Sticky generate button */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', background: 'var(--card)' }}>
+        {/* Footer: error + generate */}
+        <div className="sidebar-footer">
           {error && (
-            <div style={{
-              display: 'flex', alignItems: 'flex-start', gap: 8,
-              padding: '10px 12px', borderRadius: 10, marginBottom: 12,
-              background: '#fff5f5', border: '1px solid #fecaca',
-            }}>
-              <AlertCircle size={14} color="#ef4444" style={{ marginTop: 1, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: '#b91c1c', flex: 1, lineHeight: 1.4 }}>{error}</span>
-              <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#b91c1c' }}>
-                <X size={13} />
+            <div className="error-banner">
+              <AlertCircle size={13} color="#dc2626" style={{ flexShrink: 0, marginTop: 1 }} />
+              <span className="error-text">{error}</span>
+              <button className="error-close" onClick={() => setError(null)} aria-label="Dismiss">
+                <X size={12} />
               </button>
             </div>
           )}
+
           <button
+            className={`generate-btn${isGenerating || !content.trim() ? ' generate-btn--disabled' : ''}`}
             onClick={handleGenerate}
             disabled={isGenerating || !content.trim()}
-            style={{
-              width: '100%',
-              height: 44,
-              borderRadius: 10,
-              border: 'none',
-              cursor: isGenerating || !content.trim() ? 'not-allowed' : 'pointer',
-              background: isGenerating || !content.trim()
-                ? '#d1d5db'
-                : 'linear-gradient(135deg, #f97316 0%, #3b82f6 100%)',
-              color: 'white',
-              fontWeight: 600,
-              fontSize: 14,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              transition: 'opacity 0.15s',
-            }}
           >
-            {isGenerating
-              ? <><Loader2 size={15} className="animate-spin" /> Generating…</>
-              : <><Sparkles size={15} /> Generate Infographic</>
-            }
+            {isGenerating ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                <span>Generating…</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={15} />
+                <span>Generate Infographic</span>
+              </>
+            )}
           </button>
+
           {isGenerating && (
-            <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
-              Usually takes 20–40 seconds
-            </p>
+            <p className="generate-hint">Usually takes 20–40 seconds</p>
           )}
         </div>
       </aside>
 
-      {/* ── Right panel ── */}
-      <main style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
+      {/* ── Main ── */}
+      <main className="main-panel">
         <Gallery
           images={images}
           onRegenerate={handleRegenerate}

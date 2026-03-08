@@ -56,10 +56,10 @@ export interface KeiApiResponse {
 }
 
 export const DEFAULT_STYLE_CONFIG: StyleConfig = {
-  primaryColor: '#FF8000',
-  secondaryColor: '#2B7EF9',
+  primaryColor: '#fd8b3f',
+  secondaryColor: '#3a5eee',
   backgroundColor: '#FFFFFF',
-  lineWorkColor: '#2A2A2A',
+  lineWorkColor: '#1e1b4b',
   aspectRatio: '16:9',
   resolution: '2K',
   fontStyle: 'switzer',

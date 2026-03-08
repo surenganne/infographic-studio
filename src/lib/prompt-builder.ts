@@ -1,123 +1,178 @@
 import { InfographicContent, StyleConfig } from '@/types';
 
 export function buildInfographicPrompt(content: InfographicContent, style: StyleConfig): string {
-  const sections = content.sections
-    .map((s, i) => `${i + 1}. ${s.heading}:\n${s.points.map(p => `   • ${p}`).join('\n')}`)
-    .join('\n\n');
-
-  const notes = content.additionalNotes ? `\nAdditional context: ${content.additionalNotes}` : '';
-
   switch (style.diagramStyle) {
-    case 'technical':
-      return buildTechnicalDiagram(content.title, sections, notes, style);
-    case 'flowchart':
-      return buildFlowchart(content.title, sections, notes, style);
-    case 'comparison':
-      return buildComparison(content.title, sections, notes, style);
-    default:
-      return buildInfographic(content.title, sections, notes, style);
+    case 'technical':  return buildTechnicalDiagram(content, style);
+    case 'flowchart':  return buildFlowchart(content, style);
+    case 'comparison': return buildComparison(content, style);
+    default:           return buildInfographic(content, style);
   }
 }
 
-function buildInfographic(title: string, sections: string, notes: string, style: StyleConfig): string {
-  return `Create a professional infographic poster with this exact content:
+// ─── Infographic ────────────────────────────────────────────────────────────
 
-Title: "${title}"
+function buildInfographic(content: InfographicContent, style: StyleConfig): string {
+  const sectionList = content.sections
+    .map((s, i) => `  Section ${i + 1} — "${s.heading}":\n${s.points.map(p => `    • ${p}`).join('\n')}`)
+    .join('\n\n');
 
-Sections:
-${sections}
-${notes}
+  return `Create a professional illustrated infographic poster. Every piece of text below MUST appear verbatim in the final image.
 
-Visual style:
-- Hand-drawn technical illustration, confident ink lines, subtle watercolor fills
-- Whiteboard/sketchnote aesthetic — "premium startup explainer meets hand-sketched designer"
-- Primary accent: ${style.primaryColor}, Secondary accent: ${style.secondaryColor}
-- Background: ${style.backgroundColor}, Line work: ${style.lineWorkColor}
-- 90% grayscale base with selective color pops on key elements
-- ${style.aspectRatio} layout with clear visual hierarchy and generous white space
-- Mix of icons, diagrams, and text — hand-drawn arrows and connectors
-- Clean geometric shapes with organic edges, subtle grain texture
-- Font style: ${getFontDescription(style.fontStyle)}
-- Each section gets its own visual zone with a distinct icon or illustration
-- Avoid: corporate stiffness, too many colors, cluttered composition`;
+TITLE (large, top-center): "${content.title}"
+
+SECTIONS — render each as a distinct visual card with an icon, heading, and bullet list:
+${sectionList}
+${content.additionalNotes ? `\nFOOTER NOTE: "${content.additionalNotes}"` : ''}
+
+LAYOUT RULES:
+- ${content.sections.length} cards arranged in a ${getGridLayout(content.sections.length)} grid
+- Each card: rounded rectangle, thin border, section heading in a colored header bar, bullets below
+- Primary accent color ${style.primaryColor} and secondary ${style.secondaryColor} used alternately on card headers
+- Background ${style.backgroundColor}, body text color ${style.lineWorkColor}
+- Small relevant icon top-left of each card header
+- Generous padding inside cards, clear whitespace between cards
+- Aspect ratio ${style.aspectRatio}
+
+TYPOGRAPHY: ${getFontDescription(style.fontStyle)} — bold title, medium section headings, regular body text
+STYLE: Clean editorial infographic — think high-quality tech blog or consulting slide deck
+DO NOT omit any bullet point. DO NOT paraphrase — use the exact words provided.`;
 }
 
-function buildTechnicalDiagram(title: string, sections: string, notes: string, style: StyleConfig): string {
-  return `Create a clean technical architecture diagram / explainer poster with this content:
+// ─── Technical Diagram ──────────────────────────────────────────────────────
 
-Title: "${title}"
+function buildTechnicalDiagram(content: InfographicContent, style: StyleConfig): string {
+  const components = content.sections.map((s, i) => {
+    const connections = s.points.map(p => `      → ${p}`).join('\n');
+    return `  Component ${i + 1}: "${s.heading}"\n    Connections / details:\n${connections}`;
+  }).join('\n\n');
 
-Content sections (each becomes a labeled panel or zone in the diagram):
-${sections}
-${notes}
+  const arrowDescriptions = content.sections.flatMap((s, i) =>
+    s.points.map(p => `  • Box "${s.heading}" → labeled arrow → "${p}"`)
+  ).join('\n');
 
-Visual style — match this exact aesthetic:
-- Clean whiteboard-style diagram on a white or very light background
-- Rounded rectangle boxes with thin borders for each component/concept
-- Color-coded sections: use ${style.primaryColor} and ${style.secondaryColor} as accent colors for borders and headers
-- Directional arrows with labels showing relationships and data flow between components
-- Small icons or simple illustrations inside each box to represent concepts
-- Bold, clear sans-serif title at the top
-- Section labels in colored header bars inside each panel
-- Numbered steps or flow indicators where sequence matters
-- Dashed borders for grouping related components (like "MCP Host" grouping in the reference)
-- Clean typography — labels inside boxes, annotations along arrows
-- ${style.aspectRatio} layout, portrait or landscape depending on content depth
-- White space between panels, no clutter
-- Professional technical documentation aesthetic — like a well-designed architecture whitepaper diagram`;
+  return `Create a precise technical architecture diagram. Render EVERY component and connection listed below exactly as specified.
+
+DIAGRAM TITLE (bold, top-center, large font): "${content.title}"
+
+COMPONENTS AND THEIR CONNECTIONS:
+${components}
+${content.additionalNotes ? `\nADDITIONAL CONTEXT: ${content.additionalNotes}` : ''}
+
+REQUIRED ARROWS (draw each one with a label):
+${arrowDescriptions}
+
+VISUAL SPECIFICATION:
+- White or very light gray (#f8f8f8) background
+- Each component = rounded rectangle box, 2px border
+  • Use ${style.primaryColor} border for primary/source components (left side)
+  • Use ${style.secondaryColor} border for secondary/target components (right side)
+  • Use dashed border for grouping/container boxes
+- Component label centered inside box, bold sans-serif, dark text
+- Arrows: solid lines with filled arrowheads, short descriptive label along the arrow
+- Group related components inside a larger dashed-border container with a label
+- Layout: left-to-right data flow OR top-to-bottom hierarchy — choose whichever fits the content
+- Aspect ratio: ${style.aspectRatio}
+- Consistent spacing: equal gaps between all boxes, aligned on a grid
+- NO decorative elements — purely functional diagram
+- Small monochrome icon inside each box representing its role (server, database, user, API, etc.)
+
+TYPOGRAPHY: Clean sans-serif throughout. Box labels 14–16px bold. Arrow labels 11–12px regular. Title 24px bold.
+CRITICAL: Every single component name and arrow label from the list above must appear in the diagram. Do not omit or merge any.`;
 }
 
-function buildFlowchart(title: string, sections: string, notes: string, style: StyleConfig): string {
-  return `Create a clear process flowchart / step-by-step diagram with this content:
+// ─── Flowchart ───────────────────────────────────────────────────────────────
 
-Title: "${title}"
+function buildFlowchart(content: InfographicContent, style: StyleConfig): string {
+  const steps = content.sections.map((s, i) => {
+    const isDecision = s.heading.includes('?') || s.points.some(p => p.toLowerCase().startsWith('if ') || p.toLowerCase().startsWith('yes') || p.toLowerCase().startsWith('no'));
+    const shape = isDecision ? 'DIAMOND (decision)' : 'RECTANGLE (process step)';
+    return `  Step ${i + 1}: ${shape}\n    Label: "${s.heading}"\n    Sub-text / branches:\n${s.points.map(p => `      • ${p}`).join('\n')}`;
+  }).join('\n\n');
 
-Steps and decision points:
-${sections}
-${notes}
+  return `Create an accurate process flowchart diagram. Render every step exactly as listed.
 
-Visual style:
-- Clean flowchart with standard shapes: rectangles for steps, diamonds for decisions, rounded rects for start/end
-- Primary color ${style.primaryColor} for main flow path, ${style.secondaryColor} for alternate paths
-- Numbered steps with clear directional arrows
-- Each step has a short label and optional sub-text annotation
+FLOWCHART TITLE (top-center, bold): "${content.title}"
+
+STEPS IN ORDER (top to bottom):
+${steps}
+${content.additionalNotes ? `\nNOTES: ${content.additionalNotes}` : ''}
+
+SHAPE RULES:
+- Rounded rectangle (pill shape) = START and END nodes
+- Rectangle = process / action step
+- Diamond = decision / branch point (Yes/No or condition)
+- Parallelogram = input or output
+
+VISUAL SPECIFICATION:
+- White background
+- Main flow path: boxes filled with light ${style.primaryColor}15 tint, ${style.primaryColor} border
+- Alternate/branch path: ${style.secondaryColor} border
+- Arrows: solid lines, filled arrowheads, labeled where branching occurs
+- Step number badge (circle) top-left of each box
+- Consistent vertical spacing between steps — align all boxes on center axis
+- Aspect ratio: ${style.aspectRatio}
+- Each step label is bold, sub-text is smaller regular weight below it
+
+TYPOGRAPHY: ${getFontDescription(style.fontStyle)}
+CRITICAL: Steps must appear in the EXACT ORDER listed. Do not reorder, merge, or omit any step.`;
+}
+
+// ─── Comparison ──────────────────────────────────────────────────────────────
+
+function buildComparison(content: InfographicContent, style: StyleConfig): string {
+  const colCount = content.sections.length;
+  const columns = content.sections.map((s, i) => {
+    const color = i % 2 === 0 ? style.primaryColor : style.secondaryColor;
+    return `  Column ${i + 1} — header color ${color}:\n    Title: "${s.heading}"\n    Points:\n${s.points.map((p, j) => `      Row ${j + 1}: "${p}"`).join('\n')}`;
+  }).join('\n\n');
+
+  // Build row labels from the first section's points as reference
+  const rowLabels = content.sections[0]?.points.map((_, i) => `Row ${i + 1}`) ?? [];
+
+  return `Create a clean side-by-side comparison chart. Render every column and row exactly as listed.
+
+CHART TITLE (top-center, large bold): "${content.title}"
+
+COLUMNS (${colCount} total, equal width, side by side):
+${columns}
+${content.additionalNotes ? `\nFOOTER: "${content.additionalNotes}"` : ''}
+
+LAYOUT SPECIFICATION:
+- ${colCount} equal-width columns side by side
+- Row 0 (header row): each column's title in a colored rounded header badge
+  ${content.sections.map((s, i) => `Column ${i + 1} header: "${s.heading}" with background ${i % 2 === 0 ? style.primaryColor : style.secondaryColor}`).join(', ')}
+- Rows 1–N: alternating white / light gray (#f5f5f5) row backgrounds for readability
+- Each cell: centered text, consistent padding
+- Thin vertical dividers between columns
+- Left-most column can optionally show a row label / criterion name
+- Checkmark ✓ or ✗ icons where values are yes/no
+- Aspect ratio: ${style.aspectRatio}
 - Background: ${style.backgroundColor}
-- Consistent spacing between nodes, left-to-right or top-to-bottom flow
-- ${style.aspectRatio} layout
-- Minimal, professional — no decorative elements, just clear process visualization
-- Font: ${getFontDescription(style.fontStyle)}`;
+
+TYPOGRAPHY: ${getFontDescription(style.fontStyle)} — bold column headers, regular cell text
+CRITICAL: Every row value must appear in its correct column. Do not swap, omit, or merge any cell.`;
 }
 
-function buildComparison(title: string, sections: string, notes: string, style: StyleConfig): string {
-  return `Create a side-by-side comparison infographic with this content:
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-Title: "${title}"
-
-Items to compare (each section = one column):
-${sections}
-${notes}
-
-Visual style:
-- Multi-column layout, one column per section/concept being compared
-- Each column has a colored header using ${style.primaryColor} or ${style.secondaryColor} alternating
-- Rows of comparison criteria with checkmarks, icons, or values
-- Clean table-like structure but visually designed, not a plain table
-- Background: ${style.backgroundColor}
-- ${style.aspectRatio} layout
-- Bold column headers, readable row labels
-- Use icons to represent each comparison point
-- Font: ${getFontDescription(style.fontStyle)}
-- Professional, magazine-style comparison chart aesthetic`;
+function getGridLayout(count: number): string {
+  if (count <= 2) return '1×2';
+  if (count <= 3) return '1×3';
+  if (count <= 4) return '2×2';
+  if (count <= 6) return '2×3';
+  return '3×3';
 }
 
 function getFontDescription(fontStyle: StyleConfig['fontStyle']): string {
   switch (fontStyle) {
-    case 'handwritten': return 'casual handwritten / marker style';
-    case 'modern': return 'clean modern sans-serif';
-    case 'classic': return 'classic serif';
-    default: return 'clean geometric sans-serif (Switzer-like)';
+    case 'handwritten': return 'casual handwritten marker style (like a whiteboard)';
+    case 'modern':      return 'clean modern sans-serif (Inter / Helvetica style)';
+    case 'classic':     return 'classic serif (Georgia / Times style)';
+    default:            return 'clean geometric sans-serif (Switzer / Futura style)';
   }
 }
+
+// ─── Content parser ──────────────────────────────────────────────────────────
 
 export function parseUserContent(rawText: string): InfographicContent {
   const lines = rawText.trim().split('\n').filter(l => l.trim());
@@ -136,7 +191,7 @@ export function parseUserContent(rawText: string): InfographicContent {
 
     if (trimmed.endsWith(':') || (trimmed === trimmed.toUpperCase() && trimmed.length > 3 && trimmed.length < 50)) {
       if (currentSection) sections.push(currentSection);
-      currentSection = { heading: trimmed.replace(':', ''), points: [] };
+      currentSection = { heading: trimmed.replace(/:$/, ''), points: [] };
       continue;
     }
 
@@ -156,7 +211,10 @@ export function parseUserContent(rawText: string): InfographicContent {
   if (currentSection) sections.push(currentSection);
 
   if (sections.length === 0) {
-    sections.push({ heading: 'Overview', points: lines.filter(l => l.trim()).map(l => l.replace(/^[•\-*]\s*/, '')) });
+    sections.push({
+      heading: 'Overview',
+      points: lines.filter(l => l.trim()).map(l => l.replace(/^[•\-*]\s*/, '')),
+    });
   }
 
   return { title, sections, additionalNotes: additionalNotes || undefined };
@@ -166,7 +224,7 @@ export function generateBatchPrompts(content: InfographicContent, style: StyleCo
   return Array.from({ length: variations }, (_, i) => {
     const base = buildInfographicPrompt(content, style);
     if (i === 0) return base;
-    if (i === 1) return base + '\n\nVariation: slightly more colorful palette';
-    return base + '\n\nVariation: emphasize diagrams and flowcharts over text';
+    if (i === 1) return base + '\n\nVariation: use a slightly more colorful palette with stronger color contrast';
+    return base + '\n\nVariation: emphasize visual hierarchy with larger icons and bolder section dividers';
   });
 }

@@ -4,6 +4,8 @@ An AI-powered infographic generator built with Next.js. Paste your content, pick
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![React](https://img.shields.io/badge/React-19-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 
+![Infographic Studio Overview](public/infographic-studio-overview.png)
+
 ## Features
 
 - Paste structured text content and auto-parse it into titled sections

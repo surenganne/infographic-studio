@@ -1,8 +1,31 @@
 'use client';
 
 import { GeneratedImage } from '@/types';
-import { Download, ExternalLink, ImageIcon, Loader2, RefreshCw, Sparkles, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, ExternalLink, ImageIcon, Loader2, RefreshCw, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+// ─── Date grouping helpers ────────────────────────────────────────────────────
+
+function toDateKey(date: Date | string): string {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function todayKey(): string {
+  return toDateKey(new Date());
+}
+
+function formatGroupLabel(key: string): string {
+  const [y, m, d] = key.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (key === toDateKey(today)) return 'Today';
+  if (key === toDateKey(yesterday)) return 'Yesterday';
+  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
 
 interface GalleryProps {
   images: GeneratedImage[];
@@ -87,6 +110,16 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
     );
   }
 
+  // Group images by date, sorted newest first
+  const groups: { key: string; items: GeneratedImage[] }[] = [];
+  const seen = new Map<string, GeneratedImage[]>();
+  for (const img of images) {
+    const k = toDateKey(img.createdAt);
+    if (!seen.has(k)) { seen.set(k, []); groups.push({ key: k, items: seen.get(k)! }); }
+    seen.get(k)!.push(img);
+  }
+  groups.sort((a, b) => b.key.localeCompare(a.key));
+
   return (
     <div>
       {/* Header */}
@@ -105,21 +138,20 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
         )}
       </div>
 
-      {/* Masonry grid */}
-      <div style={{ columns: '2 300px', columnGap: 16 }}>
-        {images.map((image, index) => (
-          <ImageCard
-            key={image.id}
-            image={image}
-            index={index}
-            isDownloading={downloadingId === image.id}
-            onDownload={() => handleDownload(image)}
-            onRegenerate={() => onRegenerate(image)}
-            onDelete={() => onDelete(image.id)}
-            onPreview={() => setLightbox(image)}
-          />
-        ))}
-      </div>
+      {/* Date groups */}
+      {groups.map(group => (
+        <DateGroup
+          key={group.key}
+          dateKey={group.key}
+          images={group.items}
+          defaultOpen={group.key === todayKey()}
+          downloadingId={downloadingId}
+          onDownload={handleDownload}
+          onRegenerate={onRegenerate}
+          onDelete={onDelete}
+          onPreview={setLightbox}
+        />
+      ))}
 
       {/* Lightbox */}
       {lightbox && (
@@ -145,6 +177,86 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
               Open
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Date Group ───────────────────────────────────────────────────────────────
+
+function DateGroup({ dateKey, images, defaultOpen, downloadingId, onDownload, onRegenerate, onDelete, onPreview }: {
+  dateKey: string;
+  images: GeneratedImage[];
+  defaultOpen: boolean;
+  downloadingId: string | null;
+  onDownload: (img: GeneratedImage) => void;
+  onRegenerate: (img: GeneratedImage) => void;
+  onDelete: (id: string) => void;
+  onPreview: (img: GeneratedImage) => void;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const isToday = dateKey === todayKey();
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {/* Group header */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 12px',
+          marginBottom: open ? 14 : 0,
+          borderRadius: 10,
+          border: `1px solid ${isToday ? '#c7c7f8' : 'var(--border)'}`,
+          background: isToday ? 'var(--primary-soft)' : 'var(--bg-subtle)',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        {open
+          ? <ChevronDown size={14} color={isToday ? 'var(--primary)' : 'var(--text-muted)'} />
+          : <ChevronRight size={14} color={isToday ? 'var(--primary)' : 'var(--text-muted)'} />
+        }
+        <span style={{
+          flex: 1,
+          fontSize: 12,
+          fontWeight: 700,
+          color: isToday ? 'var(--primary-text)' : 'var(--text-muted)',
+          letterSpacing: '0.01em',
+        }}>
+          {formatGroupLabel(dateKey)}
+        </span>
+        <span style={{
+          fontSize: 11,
+          color: isToday ? 'var(--primary-text)' : 'var(--text-muted)',
+          background: isToday ? '#ddddfb' : 'var(--border)',
+          padding: '2px 8px',
+          borderRadius: 20,
+          fontWeight: 600,
+        }}>
+          {images.length}
+        </span>
+      </button>
+
+      {/* Masonry grid */}
+      {open && (
+        <div style={{ columns: '2 300px', columnGap: 16 }}>
+          {images.map((image, index) => (
+            <ImageCard
+              key={image.id}
+              image={image}
+              index={index}
+              isDownloading={downloadingId === image.id}
+              onDownload={() => onDownload(image)}
+              onRegenerate={() => onRegenerate(image)}
+              onDelete={() => onDelete(image.id)}
+              onPreview={() => onPreview(image)}
+            />
+          ))}
         </div>
       )}
     </div>

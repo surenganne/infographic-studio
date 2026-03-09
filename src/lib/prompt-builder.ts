@@ -18,7 +18,9 @@ function buildInfographic(content: InfographicContent, style: StyleConfig): stri
     .map(s => `${s.heading}:\n${s.points.map(p => `  - ${p}`).join('\n')}`)
     .join('\n\n');
 
-  return `Create a vertical infographic in a premium hand-drawn technical illustration style.
+  return `TYPOGRAPHY REQUIREMENT: Use ${getFontDescription(style.fontStyle)}. This applies to every single piece of text in the image without exception.
+
+Create a vertical infographic in a premium hand-drawn technical illustration style.
 
 Title: ${content.title}
 
@@ -31,13 +33,12 @@ Visual style:
 - Background: pure white (#FFFFFF). Line work: dark gray (#2A2A2A), not pure black
 - Color palette: 90% grayscale base with selective color pops — use ${style.primaryColor} and ${style.secondaryColor} as accent highlights only, not dominant fills
 - Subtle gradient washes where the two accent colors meet
-- Hand-lettered titles in ${getFontDescription(style.fontStyle)} style; smaller annotations in clean handwriting style
 - Clean geometric shapes with organic edges for that sketchy-but-crisp look
 - Small hand-drawn arrows and connectors between elements
 - Subtle drop shadows under main elements; subtle grain texture for premium feel
 - Clear visual hierarchy with generous white space
 - Aspect ratio ${style.aspectRatio}
-- Style reference: "Notion's illustration style but more technical" — premium tech startup explainer meets hand-sketched designer
+- Style reference: "Notion's illustration style but more technical"
 - Add a small subtle credit line at the bottom: "Created by ${AUTHOR_CREDIT}"`;
 }
 
@@ -48,9 +49,13 @@ function buildTechnicalDiagram(content: InfographicContent, style: StyleConfig):
     .map(s => `${s.heading}: ${s.points.join(', ')}`)
     .join('\n');
 
-  return `Create a clean technical architecture diagram:
+  return `TYPOGRAPHY REQUIREMENT: Use ${getFontDescription(style.fontStyle)}. This applies to every single piece of text in the image without exception.
+
+Create a clean technical architecture diagram:
 
 Title: ${content.title}
+
+FONT: ${getFontDescription(style.fontStyle)}. Apply this font style to ALL labels and text.
 
 Components and connections:
 ${components}
@@ -72,9 +77,13 @@ function buildFlowchart(content: InfographicContent, style: StyleConfig): string
     .map((s, i) => `Step ${i + 1} — ${s.heading}: ${s.points.join('; ')}`)
     .join('\n');
 
-  return `Create a clear process flowchart:
+  return `TYPOGRAPHY REQUIREMENT: Use ${getFontDescription(style.fontStyle)}. This applies to every single piece of text in the image without exception.
+
+Create a clear process flowchart:
 
 Title: ${content.title}
+
+FONT: ${getFontDescription(style.fontStyle)}. Apply this font style to ALL text.
 
 Steps in order:
 ${steps}
@@ -96,9 +105,13 @@ function buildComparison(content: InfographicContent, style: StyleConfig): strin
     .map((s, i) => `Column ${i + 1} "${s.heading}": ${s.points.join(' | ')}`)
     .join('\n');
 
-  return `Create a side-by-side comparison chart:
+  return `TYPOGRAPHY REQUIREMENT: Use ${getFontDescription(style.fontStyle)}. This applies to every single piece of text in the image without exception.
+
+Create a side-by-side comparison chart:
 
 Title: ${content.title}
+
+FONT: ${getFontDescription(style.fontStyle)}. Apply this font style to ALL text.
 
 ${columns}
 ${content.additionalNotes ? `\nFooter: ${content.additionalNotes}` : ''}
@@ -117,10 +130,16 @@ Style:
 
 function getFontDescription(fontStyle: StyleConfig['fontStyle']): string {
   switch (fontStyle) {
-    case 'handwritten': return 'casual hand-lettered marker style, like writing on a whiteboard with a thick pen';
-    case 'modern':      return 'clean modern sans-serif (Switzer/Inter style)';
-    case 'classic':     return 'classic serif (Georgia/Times style)';
-    default:            return 'clean geometric sans-serif (Switzer style)';
+    case 'switzer':
+      return 'clean geometric sans-serif typography — precise, modern, evenly-spaced letterforms with uniform stroke weight';
+    case 'handwritten':
+      return 'entirely hand-lettered typography — every word looks hand-drawn with a marker or brush pen, irregular baseline, natural ink variation, like a whiteboard or sketchbook';
+    case 'modern':
+      return 'rounded friendly sans-serif typography — soft terminals, open apertures, warm and approachable letterforms';
+    case 'classic':
+      return 'elegant serif typography — high contrast thick/thin strokes, bracketed serifs, editorial and authoritative feel';
+    default:
+      return 'clean geometric sans-serif typography';
   }
 }
 

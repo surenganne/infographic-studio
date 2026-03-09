@@ -126,6 +126,27 @@ function getFontDescription(fontStyle: StyleConfig['fontStyle']): string {
 
 // ─── Content parser ───────────────────────────────────────────────────────────
 
+/**
+ * Detects if a line starts with a short title phrase followed by its description.
+ * Pattern: "TitleWords Description sentence..." where the title is 1–5 words,
+ * each capitalised, and the rest is a longer description.
+ * Returns { heading, description } or null.
+ */
+function detectInlineHeading(line: string): { heading: string; description: string } | null {
+  // Match 1–5 title-cased words at the start, followed by a space and more text
+  const match = line.match(/^((?:[A-Z][a-zA-Z0-9\-]*(?:\s+[A-Z][a-zA-Z0-9\-]*){0,4}))\s{1,2}([A-Z].{20,})$/);
+  if (!match) return null;
+  const heading = match[1].trim();
+  const description = match[2].trim();
+  // Avoid treating normal sentences as headings (heading must be < 60 chars)
+  if (heading.length > 60) return null;
+  // If description starts with the same heading text (repeated title), strip it
+  const descStripped = description.startsWith(heading + ' ')
+    ? description.slice(heading.length + 1).trim()
+    : description;
+  return { heading, description: descStripped };
+}
+
 export function parseUserContent(rawText: string): InfographicContent {
   const lines = rawText.trim().split('\n').filter(l => l.trim());
   let title = 'Infographic';
@@ -136,17 +157,20 @@ export function parseUserContent(rawText: string): InfographicContent {
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // First non-bullet line becomes the title
     if (title === 'Infographic' && trimmed && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
       title = trimmed;
       continue;
     }
 
+    // Explicit heading: ends with colon, or is ALL CAPS (short)
     if (trimmed.endsWith(':') || (trimmed === trimmed.toUpperCase() && trimmed.length > 3 && trimmed.length < 50)) {
       if (currentSection) sections.push(currentSection);
       currentSection = { heading: trimmed.replace(/:$/, ''), points: [] };
       continue;
     }
 
+    // Bullet point
     if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
       const point = trimmed.replace(/^[•\-*]\s*/, '');
       if (currentSection) {
@@ -157,19 +181,43 @@ export function parseUserContent(rawText: string): InfographicContent {
       continue;
     }
 
-    if (trimmed.length > 0) additionalNotes += (additionalNotes ? ' ' : '') + trimmed;
+    // Inline heading pattern: "SectionName Description text..."
+    const inline = detectInlineHeading(trimmed);
+    if (inline) {
+      if (currentSection) sections.push(currentSection);
+      currentSection = { heading: inline.heading, points: [inline.description] };
+      continue;
+    }
+
+    // Plain text — append to current section as a point, or to notes
+    if (trimmed.length > 0) {
+      if (currentSection) {
+        currentSection.points.push(trimmed);
+      } else {
+        additionalNotes += (additionalNotes ? ' ' : '') + trimmed;
+      }
+    }
   }
 
   if (currentSection) sections.push(currentSection);
 
-  if (sections.length === 0) {
-    sections.push({
+  // Deduplicate sections by heading (case-insensitive)
+  const seen = new Set<string>();
+  const dedupedSections = sections.filter(s => {
+    const key = s.heading.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (dedupedSections.length === 0) {
+    dedupedSections.push({
       heading: 'Overview',
       points: lines.filter(l => l.trim()).map(l => l.replace(/^[•\-*]\s*/, '')),
     });
   }
 
-  return { title, sections, additionalNotes: additionalNotes || undefined };
+  return { title, sections: dedupedSections, additionalNotes: additionalNotes || undefined };
 }
 
 export function generateBatchPrompts(content: InfographicContent, style: StyleConfig, variations = 3): string[] {

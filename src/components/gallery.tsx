@@ -47,8 +47,8 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
       <div className="empty-state">
         {isGenerating ? (
           <>
-            <div className="empty-icon" style={{ background: 'linear-gradient(135deg, #fff4ec, #eff6ff)' }}>
-              <Loader2 size={28} color="#f97316" className="animate-spin" />
+            <div className="empty-icon" style={{ background: 'linear-gradient(135deg, #eeeefd, #f5f3ff)' }}>
+              <Loader2 size={28} color="#4c4ae0" className="animate-spin" />
             </div>
             <div>
               <p className="empty-title">Creating your infographic</p>
@@ -56,15 +56,11 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {[0, 1, 2].map(i => (
-                <div
-                  key={i}
-                  style={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    background: '#f97316',
-                    animation: 'pulse-dot 1.2s ease-in-out infinite',
-                    animationDelay: `${i * 0.2}s`,
-                  }}
-                />
+                <div key={i} style={{
+                  width: 7, height: 7, borderRadius: '50%', background: '#4c4ae0',
+                  animation: 'pulse-dot 1.2s ease-in-out infinite',
+                  animationDelay: `${i * 0.2}s`,
+                }} />
               ))}
             </div>
           </>
@@ -80,12 +76,10 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 20,
-              background: 'var(--accent-soft)', border: '1px solid #fed7aa',
+              background: 'var(--primary-soft)', border: '1px solid #c7c7f8',
             }}>
-              <Sparkles size={12} color="var(--accent-text)" />
-              <span style={{ fontSize: 12, color: 'var(--accent-text)', fontWeight: 500 }}>
-                Powered by KIE AI
-              </span>
+              <Sparkles size={12} color="var(--primary-text)" />
+              <span style={{ fontSize: 12, color: 'var(--primary-text)', fontWeight: 500 }}>Powered by KIE AI</span>
             </div>
           </>
         )}
@@ -95,6 +89,7 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
 
   return (
     <div>
+      {/* Header */}
       <div className="gallery-header">
         <div>
           <h2 className="gallery-title">Gallery</h2>
@@ -104,17 +99,19 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
         </div>
         {isGenerating && (
           <div className="generating-badge">
-            <Loader2 size={12} color="var(--accent-text)" className="animate-spin" />
+            <Loader2 size={12} color="var(--primary-text)" className="animate-spin" />
             <span>Generating&hellip;</span>
           </div>
         )}
       </div>
 
-      <div className="gallery-grid">
-        {images.map(image => (
+      {/* Masonry grid */}
+      <div style={{ columns: '2 300px', columnGap: 16 }}>
+        {images.map((image, index) => (
           <ImageCard
             key={image.id}
             image={image}
+            index={index}
             isDownloading={downloadingId === image.id}
             onDownload={() => handleDownload(image)}
             onRegenerate={() => onRegenerate(image)}
@@ -124,6 +121,7 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
         ))}
       </div>
 
+      {/* Lightbox */}
       {lightbox && (
         <div className="lightbox" onClick={() => setLightbox(null)}>
           <button className="lightbox__close" onClick={() => setLightbox(null)} aria-label="Close">
@@ -138,20 +136,11 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
           <div className="lightbox__bar" onClick={e => e.stopPropagation()}>
             <span className="lightbox__bar-title">{lightbox.content.title}</span>
             <span className="lightbox__bar-sep" />
-            <button
-              className="lightbox__bar-btn"
-              onClick={() => handleDownload(lightbox)}
-              disabled={downloadingId === lightbox.id}
-            >
-              {downloadingId === lightbox.id
-                ? <Loader2 size={13} className="animate-spin" />
-                : <Download size={13} />}
+            <button className="lightbox__bar-btn" onClick={() => handleDownload(lightbox)} disabled={downloadingId === lightbox.id}>
+              {downloadingId === lightbox.id ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
               Download
             </button>
-            <button
-              className="lightbox__bar-btn"
-              onClick={() => window.open(lightbox.url, '_blank')}
-            >
+            <button className="lightbox__bar-btn" onClick={() => window.open(lightbox.url, '_blank')}>
               <ExternalLink size={13} />
               Open
             </button>
@@ -162,75 +151,164 @@ export function Gallery({ images, onRegenerate, onDelete, isGenerating }: Galler
   );
 }
 
-function ImageCard({ image, isDownloading, onDownload, onRegenerate, onDelete, onPreview }: {
+// Accent palettes — each card gets a unique accent based on its index
+const ACCENTS = [
+  { border: '#c7c7f8', headerBg: 'linear-gradient(135deg, #4c4ae0, #7c3aed)', headerText: '#fff' },
+  { border: '#bbf7d0', headerBg: 'linear-gradient(135deg, #059669, #10b981)', headerText: '#fff' },
+  { border: '#fed7aa', headerBg: 'linear-gradient(135deg, #ea580c, #f97316)', headerText: '#fff' },
+  { border: '#e9d5ff', headerBg: 'linear-gradient(135deg, #7c3aed, #a855f7)', headerText: '#fff' },
+  { border: '#bfdbfe', headerBg: 'linear-gradient(135deg, #2563eb, #3b82f6)', headerText: '#fff' },
+  { border: '#fde68a', headerBg: 'linear-gradient(135deg, #d97706, #f59e0b)', headerText: '#fff' },
+];
+
+const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
+  infographic: { bg: '#eeeefd', color: '#3730a3' },
+  technical:   { bg: '#f0fdf4', color: '#166534' },
+  flowchart:   { bg: '#fff7ed', color: '#9a3412' },
+  comparison:  { bg: '#fdf4ff', color: '#6b21a8' },
+};
+
+function ImageCard({ image, index, isDownloading, onDownload, onRegenerate, onDelete, onPreview }: {
   image: GeneratedImage;
+  index: number;
   isDownloading: boolean;
   onDownload: () => void;
   onRegenerate: () => void;
   onDelete: () => void;
   onPreview: () => void;
 }) {
-  const [, setHovered] = useState(false);
-  const aspectStyle = { aspectRatio: image.style.aspectRatio.replace(':', '/') };
+  const [hovered, setHovered] = useState(false);
+  const accent = ACCENTS[index % ACCENTS.length];
+  const badge = TYPE_BADGE[image.style.diagramStyle ?? 'infographic'] ?? TYPE_BADGE.infographic;
+  const diagramType = image.style.diagramStyle ?? 'infographic';
 
   return (
     <div
-      className="image-card"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      style={{
+        breakInside: 'avoid',
+        marginBottom: 16,
+        borderRadius: 16,
+        border: `1.5px solid ${hovered ? accent.border : 'var(--border)'}`,
+        background: 'var(--bg-card)',
+        overflow: 'hidden',
+        transition: 'box-shadow 0.2s, transform 0.2s, border-color 0.2s',
+        boxShadow: hovered
+          ? '0 10px 32px rgba(76,74,224,0.16)'
+          : '0 1px 4px rgba(76,74,224,0.06)',
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+      }}
     >
-      <div className="image-card__thumb" style={aspectStyle} onClick={onPreview}>
+      {/* Colored accent header strip */}
+      <div style={{
+        background: accent.headerBg,
+        padding: '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{
+          fontSize: 11, fontWeight: 700, color: accent.headerText,
+          textTransform: 'capitalize', letterSpacing: '0.03em',
+        }}>
+          {diagramType}
+        </span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>
+          {new Date(image.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+
+      {/* Thumbnail */}
+      <div
+        onClick={onPreview}
+        style={{ position: 'relative', cursor: 'zoom-in', overflow: 'hidden', background: 'var(--bg-subtle)' }}
+      >
         <img
           src={image.url}
           alt={image.content.title}
-          className="image-card__img"
-          style={aspectStyle}
+          style={{
+            width: '100%',
+            height: 'auto',
+            display: 'block',
+            transition: 'transform 0.35s ease',
+            transform: hovered ? 'scale(1.03)' : 'scale(1)',
+          }}
         />
-        <div className="image-card__overlay">
-          <button
-            className="overlay-btn overlay-btn--default"
-            onClick={e => { e.stopPropagation(); onDownload(); }}
-            disabled={isDownloading}
-            title="Download"
-          >
+
+        {/* Hover overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(30,27,75,0.52)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 0.2s',
+        }}>
+          <OverlayBtn onClick={e => { e.stopPropagation(); onDownload(); }} disabled={isDownloading} title="Download">
             {isDownloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-          </button>
-          <button
-            className="overlay-btn overlay-btn--default"
-            onClick={e => { e.stopPropagation(); onRegenerate(); }}
-            title="Regenerate"
-          >
+          </OverlayBtn>
+          <OverlayBtn onClick={e => { e.stopPropagation(); onRegenerate(); }} title="Regenerate">
             <RefreshCw size={15} />
-          </button>
-          <button
-            className="overlay-btn overlay-btn--default"
-            onClick={e => { e.stopPropagation(); window.open(image.url, '_blank'); }}
-            title="Open in new tab"
-          >
+          </OverlayBtn>
+          <OverlayBtn onClick={e => { e.stopPropagation(); window.open(image.url, '_blank'); }} title="Open in new tab">
             <ExternalLink size={15} />
-          </button>
-          <button
-            className="overlay-btn overlay-btn--danger"
-            onClick={e => { e.stopPropagation(); onDelete(); }}
-            title="Delete"
-          >
+          </OverlayBtn>
+          <OverlayBtn onClick={e => { e.stopPropagation(); onDelete(); }} title="Delete" danger>
             <Trash2 size={15} />
-          </button>
+          </OverlayBtn>
         </div>
       </div>
 
-      <div className="image-card__meta">
-        <p className="image-card__title">{image.content.title}</p>
-        <div className="image-card__info">
-          <span>{image.style.diagramStyle ?? 'infographic'}</span>
-          <span className="image-card__dot" />
-          <span>{image.style.aspectRatio}</span>
-          <span className="image-card__dot" />
-          <span>{image.style.resolution}</span>
-          <span className="image-card__dot" />
-          <span>{new Date(image.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
+      {/* Footer */}
+      <div style={{
+        padding: '10px 12px',
+        borderTop: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+          background: badge.bg, color: badge.color,
+          textTransform: 'capitalize', flexShrink: 0,
+        }}>
+          {image.style.aspectRatio}
+        </span>
+        <p style={{
+          flex: 1, fontSize: 12, fontWeight: 600, color: 'var(--text)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0,
+        }}>
+          {image.content.title}
+        </p>
       </div>
     </div>
+  );
+}
+
+function OverlayBtn({ children, onClick, disabled, title, danger }: {
+  children: React.ReactNode;
+  onClick: (e: React.MouseEvent) => void;
+  disabled?: boolean;
+  title?: string;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      style={{
+        width: 36, height: 36, borderRadius: 8, border: 'none',
+        background: danger ? 'rgba(220,38,38,0.85)' : 'rgba(255,255,255,0.92)',
+        color: danger ? 'white' : '#1e1b4b',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        backdropFilter: 'blur(4px)',
+        transition: 'transform 0.1s',
+      }}
+    >
+      {children}
+    </button>
   );
 }

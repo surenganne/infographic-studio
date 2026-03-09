@@ -1,6 +1,6 @@
 import { InfographicContent, StyleConfig } from '@/types';
 
-const AUTHOR_CREDIT = 'Surendra Ganne';
+const AUTHOR_CREDIT = 'Minfy Technologies Private Limited';
 
 export function buildInfographicPrompt(content: InfographicContent, style: StyleConfig): string {
   switch (style.diagramStyle) {
@@ -18,20 +18,26 @@ function buildInfographic(content: InfographicContent, style: StyleConfig): stri
     .map(s => `${s.heading}:\n${s.points.map(p => `  - ${p}`).join('\n')}`)
     .join('\n\n');
 
-  return `Design a beautiful, professional infographic poster with the following content:
+  return `Create a vertical infographic in a premium hand-drawn technical illustration style.
 
 Title: ${content.title}
 
+Content:
 ${sections}
-${content.additionalNotes ? `\nNote: ${content.additionalNotes}` : ''}
+${content.additionalNotes ? `\nAdditional context: ${content.additionalNotes}` : ''}
 
 Visual style:
-- Clean editorial layout with ${content.sections.length} distinct sections, each in a card with a colored header
-- Primary color ${style.primaryColor}, secondary color ${style.secondaryColor}, background ${style.backgroundColor}
-- ${getFontDescription(style.fontStyle)} typography
-- Small icons next to each section heading
+- Sketchy cartoon aesthetic with confident ink lines, subtle watercolor-like fills, and a professional whiteboard feel
+- Background: pure white (#FFFFFF). Line work: dark gray (#2A2A2A), not pure black
+- Color palette: 90% grayscale base with selective color pops — use ${style.primaryColor} and ${style.secondaryColor} as accent highlights only, not dominant fills
+- Subtle gradient washes where the two accent colors meet
+- Hand-lettered titles in Switzer font style; smaller annotations in clean handwriting style
+- Clean geometric shapes with organic edges for that sketchy-but-crisp look
+- Small hand-drawn arrows and connectors between elements
+- Subtle drop shadows under main elements; subtle grain texture for premium feel
+- Clear visual hierarchy with generous white space
 - Aspect ratio ${style.aspectRatio}
-- High quality, print-ready design
+- Style reference: "Notion's illustration style but more technical" — premium tech startup explainer meets hand-sketched designer
 - Add a small subtle credit line at the bottom: "Created by ${AUTHOR_CREDIT}"`;
 }
 

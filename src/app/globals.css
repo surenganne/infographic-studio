@@ -230,19 +230,19 @@ body {
 }
 
 .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  columns: 2 300px;
+  column-gap: 16px;
 }
 
 /* ── Image card ────────────────────────────────────────────────────────────── */
 .image-card {
+  break-inside: avoid;
+  margin-bottom: 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--bg-card);
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.2s;
-  cursor: default;
 }
 
 .image-card:hover {
